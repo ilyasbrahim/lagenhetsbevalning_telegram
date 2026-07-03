@@ -1,0 +1,36 @@
+{
+  "checks": [
+    {
+      "name": "Wallenstam - Stockholm",
+      "url": "https://www.wallenstam.se/sv/bostader/lediga-bostader/?Status=Available&Region=Stockholm",
+      "enabled": true,
+      "scraper": "wallenstam",
+      "mode": "url_only",
+      "trust_url_filters": true,
+      "filters": {
+        "max_rent": 999999,
+        "min_rooms": 0
+      }
+    },
+    {
+      "name": "Heimstaden - Stor-Stockholm",
+      "url": "https://mitt.heimstaden.com/ledigt/lagenhet#",
+      "enabled": true,
+      "scraper": "heimstaden",
+      "mode": "browser_or_api",
+      "filters": {
+        "districts": ["Stor-Stockholm"],
+        "max_rent": 999999,
+        "min_rooms": 0
+      }
+    }
+  ],
+  "settings": {
+    "delay_seconds_between_checks": 5,
+    "send_test_message_on_start": false,
+    "headless": true,
+    "allow_missing_rent": true,
+    "allow_missing_rooms": true,
+    "debug_filtering": false
+  }
+}
