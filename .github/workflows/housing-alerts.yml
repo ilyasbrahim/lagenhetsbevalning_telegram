@@ -1,10 +1,10 @@
 name: Housing Alerts
 run-name: Housing Alerts - ${{ github.event_name }}
 
-on:
-  workflow_dispatch:
+"on":
   schedule:
     - cron: "*/5 * * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
