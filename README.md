@@ -144,6 +144,8 @@ På macOS kan du även använda `launchd`. Skapa en plist som kör samma kommand
 
 Projektet innehåller ett GitHub Actions-workflow i `.github/workflows/housing-alerts.yml`. Det kör `python main.py` i molnet enligt schemat `7,37 * * * *`, alltså var 30:e minut på minut 7 och 37. Kör inte oftare än var 30:e minut, så bostadssidorna inte belastas i onödan.
 
+Under test körs Housing Alerts var 5:e minut. När allt är verifierat bör cron ändras till `0 6,12,18 * * *` för 3 körningar per dag.
+
 Så här sätter du upp det:
 
 1. Skapa ett privat GitHub-repo.
