@@ -2,9 +2,14 @@ name: Housing Alerts
 run-name: Housing Alerts - ${{ github.event_name }}
 
 "on":
+  workflow_dispatch:
   schedule:
     - cron: "*/5 * * * *"
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/housing-alerts.yml"
 
 permissions:
   contents: write
@@ -20,6 +25,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Debug trigger
+        run: |
+          echo "event_name=${{ github.event_name }}"
+          echo "ref=${{ github.ref }}"
+          echo "sha=${{ github.sha }}"
+          date -u
 
       - name: Set up Python
         uses: actions/setup-python@v5
