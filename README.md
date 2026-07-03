@@ -142,9 +142,9 @@ På macOS kan du även använda `launchd`. Skapa en plist som kör samma kommand
 
 ## GitHub Actions
 
-Projektet innehåller ett GitHub Actions-workflow i `.github/workflows/housing-alerts.yml`. Det kör `python main.py` i molnet enligt schemat `7,37 * * * *`, alltså var 30:e minut på minut 7 och 37. Kör inte oftare än var 30:e minut, så bostadssidorna inte belastas i onödan.
+Projektet innehåller ett GitHub Actions-workflow i `.github/workflows/housing-alerts.yml`. Det kör `python main.py` i molnet när workflowet triggas med `workflow_dispatch`.
 
-Under test körs Housing Alerts var 5:e minut. När allt är verifierat bör cron ändras till `0 6,12,18 * * *` för 3 körningar per dag.
+GitHubs interna `schedule` används inte, eftersom den kan vara opålitlig i vissa repos. Använd i stället en extern cron-tjänst som timer och låt den trigga workflowet via GitHub API.
 
 Så här sätter du upp det:
 
@@ -182,18 +182,78 @@ Om Telegram inte skickar:
 - Kör workflowet manuellt och läs loggen för `telegram_failed`.
 - Testa lokalt med samma värden i `.env`.
 
-För att ändra intervallet, redigera `cron` i `.github/workflows/housing-alerts.yml`. GitHub Actions använder UTC-tid för scheman. Rekommendationen är att fortsätta köra på udda minuter, till exempel `7,37 * * * *`, i stället för exakt `0,30 * * * *`.
-
 Tänk på att offentliga bostadssidor kan blockera datacentertrafik. Om en sida fungerar lokalt men inte i GitHub Actions kan det bero på GitHubs runner-nätverk.
 
-Om schemalagda körningar inte startar:
+## Extern cron via GitHub API
 
-- Kontrollera att GitHubs webbversion av `.github/workflows/housing-alerts.yml` ligger på default branch och innehåller både `workflow_dispatch` och `schedule`.
+En extern cron-tjänst, till exempel cron-job.org, kan trigga workflowet med GitHub REST API. Då är cron-tjänsten timern, medan GitHub Actions bara kör jobbet när det får en `workflow_dispatch`.
+
+Endpoint:
+
+```text
+POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches
+```
+
+För detta projekt kan `workflow_id` vara:
+
+```text
+housing-alerts.yml
+```
+
+Body:
+
+```json
+{
+  "ref": "main"
+}
+```
+
+Exempel med `curl`:
+
+```bash
+curl -L \
+  -X POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer GITHUB_TOKEN_HERE" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/OWNER/REPO/actions/workflows/housing-alerts.yml/dispatches \
+  -d '{"ref":"main"}'
+```
+
+Skapa en GitHub Personal Access Token:
+
+1. Skapa en fine-grained token i GitHub.
+2. Ge token access endast till detta repo.
+3. Ge den permission för Actions/workflows så den kan köra `workflow_dispatch`.
+4. Spara token i den externa cron-tjänsten, inte i repot.
+
+Exempelinställning i cron-job.org eller liknande:
+
+- Method: `POST`
+- URL: `https://api.github.com/repos/OWNER/REPO/actions/workflows/housing-alerts.yml/dispatches`
+- Header: `Accept: application/vnd.github+json`
+- Header: `Authorization: Bearer <GITHUB_PAT>`
+- Header: `X-GitHub-Api-Version: 2022-11-28`
+- Header: `Content-Type: application/json`
+- Body: `{"ref":"main"}`
+
+Rekommenderade intervall:
+
+- Test: var 30:e minut.
+- Produktion: 3 gånger per dag, till exempel 08:00, 14:00 och 20:00 svensk tid.
+
+Kör inte oftare än var 30:e minut, så bostadssidorna inte belastas i onödan.
+
+Om externa cron-körningar inte startar workflowet:
+
+- Kontrollera att URL:en innehåller rätt `OWNER`, `REPO` och `housing-alerts.yml`.
+- Kontrollera att body är exakt `{"ref":"main"}`.
+- Kontrollera att token har access till repot och permission att köra Actions/workflows.
+- Kontrollera att token skickas som `Authorization: Bearer <GITHUB_PAT>`.
 - Gå till `Settings` -> `Branches` och kontrollera att default branch är `main`.
 - Gå till `Settings` -> `Actions` -> `General` och kontrollera att Actions är tillåtna.
 - Gå till `Actions` -> `Housing Alerts`. Menyn med tre punkter ska visa `Disable workflow`. Om den visar `Enable workflow` behöver workflowet aktiveras.
-- Kontrollera att `Schedule Test` också dyker upp under Actions. Om `Schedule Test` inte körs automatiskt är problemet troligen repo-/Actions-inställning, default branch eller GitHubs schedule-fördröjning.
-- GitHub schedule är inte exakt realtid. Vänta minst 10-15 minuter efter push innan du bedömer om cron fungerar.
+- Kör workflowet manuellt med `Run workflow` för att bekräfta att själva jobbet fungerar.
 
 ## Felsökning
 
