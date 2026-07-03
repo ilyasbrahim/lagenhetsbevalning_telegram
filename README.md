@@ -184,6 +184,15 @@ För att ändra intervallet, redigera `cron` i `.github/workflows/housing-alerts
 
 Tänk på att offentliga bostadssidor kan blockera datacentertrafik. Om en sida fungerar lokalt men inte i GitHub Actions kan det bero på GitHubs runner-nätverk.
 
+Om schemalagda körningar inte startar:
+
+- Kontrollera att GitHubs webbversion av `.github/workflows/housing-alerts.yml` ligger på default branch och innehåller både `workflow_dispatch` och `schedule`.
+- Gå till `Settings` -> `Branches` och kontrollera att default branch är `main`.
+- Gå till `Settings` -> `Actions` -> `General` och kontrollera att Actions är tillåtna.
+- Gå till `Actions` -> `Housing Alerts`. Menyn med tre punkter ska visa `Disable workflow`. Om den visar `Enable workflow` behöver workflowet aktiveras.
+- Kontrollera att `Schedule Test` också dyker upp under Actions. Om `Schedule Test` inte körs automatiskt är problemet troligen repo-/Actions-inställning, default branch eller GitHubs schedule-fördröjning.
+- GitHub schedule är inte exakt realtid. Vänta minst 10-15 minuter efter push innan du bedömer om cron fungerar.
+
 ## Felsökning
 
 - Kör `python main.py` och läs loggarna.
