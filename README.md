@@ -184,14 +184,14 @@ Om Telegram inte skickar:
 
 Tänk på att offentliga bostadssidor kan blockera datacentertrafik. Om en sida fungerar lokalt men inte i GitHub Actions kan det bero på GitHubs runner-nätverk.
 
-## Extern cron via GitHub API
+## Extern cron med cron-job.org
 
-En extern cron-tjänst, till exempel cron-job.org, kan trigga workflowet med GitHub REST API. Då är cron-tjänsten timern, medan GitHub Actions bara kör jobbet när det får en `workflow_dispatch`.
+cron-job.org kan trigga workflowet med GitHub REST API. Då är cron-job.org timern, medan GitHub Actions bara kör jobbet när det får en `workflow_dispatch`.
 
 Endpoint:
 
 ```text
-POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches
+POST https://api.github.com/repos/OWNER/REPO/actions/workflows/housing-alerts.yml/dispatches
 ```
 
 För detta projekt kan `workflow_id` vara:
@@ -216,23 +216,25 @@ curl -L \
   -H "Accept: application/vnd.github+json" \
   -H "Authorization: Bearer GITHUB_TOKEN_HERE" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
+  -H "Content-Type: application/json" \
   https://api.github.com/repos/OWNER/REPO/actions/workflows/housing-alerts.yml/dispatches \
   -d '{"ref":"main"}'
 ```
 
-Skapa en GitHub Personal Access Token:
+Skapa en GitHub fine-grained Personal Access Token:
 
 1. Skapa en fine-grained token i GitHub.
 2. Ge token access endast till detta repo.
-3. Ge den permission för Actions/workflows så den kan köra `workflow_dispatch`.
-4. Spara token i den externa cron-tjänsten, inte i repot.
+3. Ge token permission för Actions/workflows så den kan köra `workflow_dispatch`.
+4. Använd token bara i cron-job.org.
+5. Spara inte token i repot.
 
 Exempelinställning i cron-job.org eller liknande:
 
 - Method: `POST`
 - URL: `https://api.github.com/repos/OWNER/REPO/actions/workflows/housing-alerts.yml/dispatches`
 - Header: `Accept: application/vnd.github+json`
-- Header: `Authorization: Bearer <GITHUB_PAT>`
+- Header: `Authorization: Bearer GITHUB_PAT_HERE`
 - Header: `X-GitHub-Api-Version: 2022-11-28`
 - Header: `Content-Type: application/json`
 - Body: `{"ref":"main"}`
@@ -249,7 +251,7 @@ Om externa cron-körningar inte startar workflowet:
 - Kontrollera att URL:en innehåller rätt `OWNER`, `REPO` och `housing-alerts.yml`.
 - Kontrollera att body är exakt `{"ref":"main"}`.
 - Kontrollera att token har access till repot och permission att köra Actions/workflows.
-- Kontrollera att token skickas som `Authorization: Bearer <GITHUB_PAT>`.
+- Kontrollera att token skickas som `Authorization: Bearer GITHUB_PAT_HERE`.
 - Gå till `Settings` -> `Branches` och kontrollera att default branch är `main`.
 - Gå till `Settings` -> `Actions` -> `General` och kontrollera att Actions är tillåtna.
 - Gå till `Actions` -> `Housing Alerts`. Menyn med tre punkter ska visa `Disable workflow`. Om den visar `Enable workflow` behöver workflowet aktiveras.

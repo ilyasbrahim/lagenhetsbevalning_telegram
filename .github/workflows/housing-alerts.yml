@@ -19,6 +19,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug trigger
+        run: |
+          echo "event_name=${{ github.event_name }}"
+          echo "utc_time=$(date -u)"
+          echo "ref=${{ github.ref }}"
+          echo "sha=${{ github.sha }}"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
